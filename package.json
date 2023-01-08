@@ -1,0 +1,28 @@
+{
+  "name": "npm",
+  "version": "1.0.0",
+  "description": "![GitHub Classroom Workflow](../../workflows/GitHub%20Classroom%20Workflow/badge.svg?branch=master)",
+  "main": "8080",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/bmstu-rsoi/rsoi-2022-lab2-microservices-SergueiBaskakov.git"
+  },
+  "author": "Serguei Diaz",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/bmstu-rsoi/rsoi-2022-lab2-microservices-SergueiBaskakov/issues"
+  },
+  "homepage": "https://github.com/bmstu-rsoi/rsoi-2022-lab2-microservices-SergueiBaskakov#readme",
+  "dependencies": {
+    "axios": "^1.1.3",
+    "axios-circuit-breaker": "^1.0.0",
+    "express": "^4.18.2",
+    "opossum": "^7.0.1",
+    "pg": "^8.8.0",
+    "utf8": "^3.0.0",
+    "uuid": "^9.0.0"
+  }
+}

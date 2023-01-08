@@ -14,7 +14,73 @@ services:
     ports:
       - "5432:5432"
 
+  pgadmin:
+    container_name: pgadmin4_container
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+        PGADMIN_DEFAULT_EMAIL: admin@admin.com
+        PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+        - "5050:80"
+
 # TODO добавить сервисы
+  gatewayservice:
+    restart: on-failure
+    build: .
+    environment:
+        NODE_ENV: development
+        PORT: 8080
+    ports:
+        - "8080:8080"
+    volumes:
+        - .:/gatewayservice/
+        - /app/node_modules
+
+  loyaltyservice:
+    restart: on-failure
+    build: .
+    depends_on:
+        - postgres
+    environment:
+        DATABASE_URL: postgres://program:test@localhost:5432/reservations
+        NODE_ENV: development
+        PORT: 8050
+    ports:
+        - "8050:8050"
+    volumes:
+        - .:/loyaltyservice/
+        - /app/node_modules
+
+  paymentservice:
+    restart: on-failure
+    build: .
+    depends_on:
+        - postgres
+    environment:
+        DATABASE_URL: postgres://program:test@localhost:5432/payments
+        NODE_ENV: development
+        PORT: 8060
+    ports:
+        - "8060:8060"
+    volumes:
+        - .:/paymentservice/
+        - /app/node_modules
+
+  reservationservice:
+    restart: on-failure
+    build: .
+    depends_on:
+        - postgres
+    environment:
+        DATABASE_URL: postgres://program:test@localhost:5432/reservations
+        NODE_ENV: development
+        PORT: 8070
+    ports:
+        - "8070:8070"
+    volumes:
+        - .:/reservationservice/
+        - /app/node_modules
 
 volumes:
   db-data:
