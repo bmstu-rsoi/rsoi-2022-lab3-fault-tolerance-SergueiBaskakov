@@ -8,7 +8,7 @@ const HOST = '0.0.0.0';
 // App
 const app = express();
 
-const client = new Client({
+var client = new Client({
   user: 'program',
   host: 'postgres',
   database: 'payments',
@@ -17,6 +17,17 @@ const client = new Client({
 });
 
 client.connect();
+
+function renewClient() {
+  client = new Client({
+    user: 'program',
+    host: 'postgres',
+    database: 'payments',
+    password: 'test',
+    port: 5432,
+  });
+  client.connect();
+}
 
 app.use(express.json());
 
@@ -38,6 +49,7 @@ app.get('/manage/health', (req, res) => {
 });
 
 app.get('/api/v1/payment', (req, res) => {
+  renewClient()
   let querySQL = `
   SELECT payment_uid as paymentUid,
           status,
@@ -59,6 +71,7 @@ app.get('/api/v1/payment', (req, res) => {
 });
 
 app.get('/api/v1/payments', (req, res) => {
+  renewClient()
   var params = [];
   let values = req.query.paymentUids.split(',')
   for(var i = 1; i <= values.length; i++) {
@@ -88,6 +101,7 @@ app.get('/api/v1/payment:paymentUid', (req, res) => {
 });
 
 app.delete('/api/v1/payment/:paymentUid', (req, res) => {
+  renewClient()
   let querySQL = `
     UPDATE payment
     SET status = CANCELED
@@ -108,6 +122,7 @@ app.delete('/api/v1/payment/:paymentUid', (req, res) => {
 });
 
 app.post('/api/v1/pay', (req, res) => {
+  renewClient()
   let querySQL = `
   INSERT INTO payment (payment_uid, status, price)
   VALUES ($1, $2, $3)
@@ -136,6 +151,7 @@ app.post('/api/v1/pay', (req, res) => {
 });
 
 function init() {
+  renewClient()
   let querySQL = `
   CREATE TABLE IF NOT EXISTS payment
 (

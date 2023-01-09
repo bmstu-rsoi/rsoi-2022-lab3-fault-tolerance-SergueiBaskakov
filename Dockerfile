@@ -1,6 +1,6 @@
 FROM node:12
 
-WORKDIR ./
+WORKDIR /
 
 COPY ./package.json .
 RUN npm cache clean --force

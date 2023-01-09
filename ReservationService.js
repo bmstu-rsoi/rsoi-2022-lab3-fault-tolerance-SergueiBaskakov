@@ -9,7 +9,7 @@ const HOST = '0.0.0.0';
 // App
 const app = express();
 
-const client = new Client({
+var client = new Client({
   user: 'program',
   host: 'postgres',
   database: 'reservations',
@@ -18,6 +18,17 @@ const client = new Client({
 });
 
 client.connect();
+
+function renewClient() {
+  client = new Client({
+    user: 'program',
+    host: 'postgres',
+    database: 'reservations',
+    password: 'test',
+    port: 5432,
+  });
+  client.connect();
+}
 
 app.use(express.json());
 
@@ -39,6 +50,7 @@ app.get('/manage/health', (req, res) => {
 });
 
 app.get('/api/v1/hotels', (req, res) => {
+  renewClient()
   let querySQL = `
   SELECT id,
         hotel_uid as "hotelUid",
@@ -72,6 +84,7 @@ app.get('/api/v1/hotels', (req, res) => {
 });
 
 app.delete('/api/v1/reservations/:reservationUid', (req, res) => {
+  renewClient()
   let querySQL = `
     UPDATE reservation
     SET status = 'CANCELED'
@@ -94,6 +107,7 @@ app.delete('/api/v1/reservations/:reservationUid', (req, res) => {
 });
 
 app.get('/api/v1/hotels/:hotelUid', (req, res) => {
+  renewClient()
   let querySQL = `
   SELECT id,
         hotel_uid as "hotelUid",
@@ -126,6 +140,7 @@ app.get('/api/v1/hotels/:hotelUid', (req, res) => {
 
 
 app.get('/api/v1/reservations', (req, res) => {
+  renewClient()
   let querySQL = `
   SELECT 
           reservation.reservation_uid as "reservationUid",
@@ -175,6 +190,7 @@ app.get('/api/v1/reservations', (req, res) => {
 });
 
 app.get('/api/v1/avaibility', (req, res) => {
+  renewClient()
   let querySQL = `
   SELECT 
           reservation.reservation_uid as reservationUid,
@@ -210,6 +226,7 @@ app.get('/api/v1/avaibility', (req, res) => {
 });
 
 app.get('/api/v1/reservations/:reservationUid', (req, res) => {
+  renewClient()
   let querySQL = `
   SELECT 
           reservation.reservation_uid as "reservationUid",
@@ -262,6 +279,7 @@ app.get('/api/v1/reservations/:reservationUid', (req, res) => {
 });
 
 app.post('/api/v1/reservations', (req, res) => {
+  renewClient()
   let querySQL = `
   INSERT INTO reservation (reservation_uid, username, payment_uid, hotel_id, status, start_date, end_data)
   VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -288,6 +306,7 @@ app.post('/api/v1/reservations', (req, res) => {
 });
 
 function init() {
+  renewClient()
   let querySQL = `
   CREATE TABLE IF NOT EXISTS hotels
 (

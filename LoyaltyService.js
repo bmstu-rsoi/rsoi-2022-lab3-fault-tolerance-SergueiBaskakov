@@ -7,7 +7,7 @@ const HOST = '0.0.0.0';
 // App
 const app = express();
 
-const client = new Client({
+var client = new Client({
   user: 'program',
   host: 'postgres',
   database: 'loyalties',
@@ -16,6 +16,17 @@ const client = new Client({
 });
 
 client.connect();
+
+function renewClient() {
+  client = new Client({
+    user: 'program',
+    host: 'postgres',
+    database: 'loyalties',
+    password: 'test',
+    port: 5432,
+  });
+  client.connect();
+}
 
 app.use(express.json());
 
@@ -37,6 +48,7 @@ app.get('/manage/health', (req, res) => {
 });
 
 app.get('/api/v1/loyalty', (req, res) => {
+  renewClient()
   let querySQL = `
   SELECT reservation_count as "reservationCount",
         status,
@@ -44,6 +56,7 @@ app.get('/api/v1/loyalty', (req, res) => {
   FROM loyalty WHERE username = $1
 `
   let values = [req.query.username]
+  console.log(querySQL)
   client.query(querySQL, values, (err, result)=>{
     if(!err){
       res.setHeader('Content-Type', 'application/json')
@@ -56,6 +69,7 @@ app.get('/api/v1/loyalty', (req, res) => {
       }
     }
     else {
+      console.log(err)
       res.setHeader('Content-Type', 'application/json')
       res.statusCode = 404
       res.end(JSON.stringify({ message: err.message}));
@@ -64,6 +78,7 @@ app.get('/api/v1/loyalty', (req, res) => {
 });
 
 app.post('/api/v1/loyalty', (req, res) => {
+  renewClient()
   let querySQL = `
   UPDATE loyalty SET reservation_count = reservation_count + 1 WHERE username = $1
 `
@@ -88,6 +103,7 @@ app.post('/api/v1/loyalty', (req, res) => {
 });
 
 function init() {
+  renewClient()
   let querySQL = `
   CREATE TABLE IF NOT EXISTS loyalty
 (
@@ -115,6 +131,7 @@ VALUES ($1, $2, $3, $4, $5)
     ]
 
   client.query(querySQL, (err, result)=>{
+    console.log(querySQL)
     if(!err){
       console.log(result)
     }
@@ -124,6 +141,7 @@ VALUES ($1, $2, $3, $4, $5)
   })
 
   client.query(queryInsert, values, (err, result)=>{
+    console.log(queryInsert)
     if(!err){
       console.log(result)
     }

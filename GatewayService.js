@@ -124,9 +124,6 @@ app.get('/api/v1/loyalty', (req, res) => {
     }
     
   })
-  .finally(() => {
-    // always executed
-  });
 });
 
 app.get('/api/v1/reservations/:reservationUid', (req, res) => {
