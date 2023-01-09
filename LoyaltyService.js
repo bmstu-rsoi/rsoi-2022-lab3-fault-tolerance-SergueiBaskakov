@@ -102,6 +102,31 @@ app.post('/api/v1/loyalty', (req, res) => {
   });
 });
 
+app.post('/api/v1/loyaltyReduce', (req, res) => {
+  renewClient()
+  let querySQL = `
+  UPDATE loyalty SET reservation_count = reservation_count - 1 WHERE username = $1
+`
+  let values = [req.query.username]
+  client.query(querySQL, values, (err, result)=>{
+    if(!err){
+      res.setHeader('Content-Type', 'application/json')
+      res.statusCode = 200
+      if (result.rowCount > 0) {
+        res.send(JSON.stringify(result.rows[0]))
+      }
+      else {
+        res.end()
+      }
+    }
+    else {
+      res.setHeader('Content-Type', 'application/json')
+      res.statusCode = 404
+      res.end(JSON.stringify({ message: err.message}));
+    }
+  });
+});
+
 function init() {
   renewClient()
   let querySQL = `

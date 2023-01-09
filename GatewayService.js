@@ -40,7 +40,31 @@ const breakerReservationGet = new CircuitBreaker(axios.get, options);
 const breakerReservationPost = new CircuitBreaker(axios.post, options);
 
 const breakerLoyaltyGet = new CircuitBreaker(axios.get, options);
+const breakerLoyaltyPost = new CircuitBreaker(axios.post, options);
+
+breakerLoyaltyPost.on('close',
+  () => {
+    if (loyalytyBreakerStack.length > 0) {
+      loyalytyBreakerStack.forEach((element) => {
+        console.log("stack")
+        element.function()
+      })
+    }
+  });
+
+  breakerLoyaltyGet.on('close',
+  () => {
+    if (loyalytyBreakerStack.length > 0) {
+      loyalytyBreakerStack.forEach((element) => {
+        console.log("stack")
+        element.function()
+      })
+    }
+  });
+
 const breakerPaymentGet = new CircuitBreaker(axios.get, options);
+
+var loyalytyBreakerStack = []
 
 
 
@@ -388,25 +412,72 @@ app.post('/api/v1/reservations', (req, res) => {
 */
 
 app.delete('/api/v1/reservations/:reservationUid', (req, res) => {
-  axios.delete(`http://${HOST2}:8070/api/v1/reservations/${req.params.reservationUid}`, {
+  cancelReservation(req.params.reservationUid, req.header("X-User-Name"))
+  res.statusCode = 204
+  res.send()
+});
+
+function cancelReservation(reservationUid, username) {
+  breakerLoyaltyPost.fire(`http://${HOST2}:8050/api/v1/loyaltyReduce`, null, {
     params: {
-      username: req.header("X-User-Name")
+      username: username
     }
   })
-  .then((reservationResponse) => {
-    console.log("reservationResponse", reservationResponse)
-    res.statusCode = 204
-    res.send()
+  .then((loyaltyResponse) => {
+    // handle success
+    var reservationRequest = axios.get(`http://${HOST2}:8070/api/v1/reservations/${reservationUid}`, {
+    params: {
+      username: username,
+    }
+  })
+  var deleteReservation = axios.delete(`http://${HOST2}:8070/api/v1/reservations/${reservationUid}`, {
+    params: {
+      username: username
+    }
+  })
+  axios.all([reservationRequest, deleteReservation]).then(axios.spread((...responses) => {
+    const reservation = responses[0]
+    console.log(reservation)
+    axios.delete(`http://${HOST2}:8060/api/v1/payment/${reservation.data.payment}`, {
+      params: {
+        username: username
+      }
+    })
+    .then((paymentResponse) => {
+      console.log("paymentResponse", paymentResponse)
+      //res.statusCode = 204
+      //res.send()
+    })
+    .catch((error) => {
+      // handle error
+      //res.statusCode = 404
+      //res.end(JSON.stringify({ message: error.message}));
+    })
+    // use/access the results 
+  })).catch(error => {
+    // react on errors.
+    //res.statusCode = 404
+    console.log(error)
+    //res.end(JSON.stringify({ message: error.message}));
+  })
   })
   .catch((error) => {
     // handle error
-    res.statusCode = 404
-    res.end(JSON.stringify({ message: error.message}));
+    if (error.code == "EOPENBREAKER" || error.code == "ECONNREFUSED") {
+      loyalytyBreakerStack.push(() => {
+        console.log(reservationUid)
+        cancelReservation(reservationUid, username)
+      })
+      //res.statusCode = 204
+      //res.send()
+    }
+    else {
+      //res.statusCode = 404
+      //res.end(JSON.stringify({ message: error.message}));
+    }
+    
   })
-  .finally(() => {
-    // always executed
-  });
-});
+}
 
 function pay(req, res, hotel, days, loyalty) {
   axios.post(`http://${HOST2}:8060/api/v1/pay`, null, {

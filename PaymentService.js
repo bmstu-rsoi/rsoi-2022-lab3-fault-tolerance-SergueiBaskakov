@@ -104,7 +104,7 @@ app.delete('/api/v1/payment/:paymentUid', (req, res) => {
   renewClient()
   let querySQL = `
     UPDATE payment
-    SET status = CANCELED
+    SET status = 'CANCELED'
     WHERE payment_uid = $1
 `
   let values = [req.params.paymentUid]
