@@ -30,9 +30,9 @@ app.listen(PORT, HOST);
 console.log(`Running on http://${HOST}:${PORT}`);
 
 const options = {
-  timeout: 2000, // If our function takes longer than 3 seconds, trigger a failure
+  timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
   errorThresholdPercentage: 50, // When 50% of requests fail, trip the circuit
-  resetTimeout: 3000 // After 3 seconds, try again.
+  resetTimeout: 30000 // After 30 seconds, try again.
 };
 
 const breakerReservationGet = new CircuitBreaker(axios.get, options);
@@ -101,7 +101,7 @@ function reportFallbackEvent(result) {
 
 app.get('/api/v1/loyalty', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  breakerLoyaltyGet.fire(`http://${HOST}:8050/api/v1/loyalty`, {
+  axios.get(`http://${HOST}:8050/api/v1/loyalty`, {
     params: {
       username: req.header("X-User-Name"),
     }
