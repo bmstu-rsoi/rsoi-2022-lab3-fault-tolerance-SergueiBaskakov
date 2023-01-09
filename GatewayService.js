@@ -101,7 +101,7 @@ function reportFallbackEvent(result) {
 
 app.get('/api/v1/loyalty', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  axios.get(`http://${HOST}:8050/api/v1/loyalty`, {
+  breakerLoyaltyGet.fire(`http://${HOST}:8050/api/v1/loyalty`, {
     params: {
       username: req.header("X-User-Name"),
     }
