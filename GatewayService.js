@@ -8,7 +8,7 @@ const CircuitBreaker = require('opossum');
 // Constants
 const PORT = 8080;
 const HOST = '0.0.0.0';
-const HOST2 = 'host.docker.internal';
+const HOST2 = '172.17.0.1';
 // App
 const app = express();
 
