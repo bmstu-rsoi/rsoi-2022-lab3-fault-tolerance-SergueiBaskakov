@@ -7,8 +7,8 @@ const CircuitBreaker = require('opossum');
 
 // Constants
 const PORT = 8080;
-const HOST2 = '0.0.0.0';
-const HOST = 'host.docker.internal';
+const HOST = '0.0.0.0';
+const HOST2 = 'host.docker.internal';
 // App
 const app = express();
 
@@ -28,7 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.listen(PORT, HOST);
 
-console.log(`Running on http://${HOST2}:${PORT}`);
+console.log(`Running on http://${HOST}:${PORT}`);
 
 const options = {
   timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
@@ -61,7 +61,7 @@ app.get('/api/v1/hotels', (req, res) => {
   //    size: req.query.size
   //  }
   //})
-  breakerReservationGet.fire(`http://${HOST}:8070/api/v1/hotels`, {
+  breakerReservationGet.fire(`http://${HOST2}:8070/api/v1/hotels`, {
       params: {
         page: req.query.page,
         size: req.query.size
@@ -102,7 +102,7 @@ function reportFallbackEvent(result) {
 
 app.get('/api/v1/loyalty', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  breakerLoyaltyGet.fire(`http://${HOST}:8050/api/v1/loyalty`, {
+  breakerLoyaltyGet.fire(`http://${HOST2}:8050/api/v1/loyalty`, {
     params: {
       username: req.header("X-User-Name"),
     }
@@ -129,14 +129,14 @@ app.get('/api/v1/loyalty', (req, res) => {
 
 app.get('/api/v1/reservations/:reservationUid', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  axios.get(`http://${HOST}:8070/api/v1/reservations/${req.params.reservationUid}`, {
+  axios.get(`http://${HOST2}:8070/api/v1/reservations/${req.params.reservationUid}`, {
     params: {
       username: req.header("X-User-Name"),
     }
   })
   .then((reservationResponse) => {
     // handle success
-      axios.get(`http://${HOST}:8060/api/v1/payment`, {
+      axios.get(`http://${HOST2}:8060/api/v1/payment`, {
       params: {
         paymentUid: reservationResponse.data.payment,
       }
@@ -173,7 +173,7 @@ app.get('/api/v1/reservations/:reservationUid', (req, res) => {
 
 app.get('/api/v1/reservations', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
-  axios.get(`http://${HOST}:8070/api/v1/reservations`, {
+  axios.get(`http://${HOST2}:8070/api/v1/reservations`, {
     params: {
       username: req.header("X-User-Name"),
     }
@@ -183,7 +183,7 @@ app.get('/api/v1/reservations', (req, res) => {
     console.log("reservationResponse.data.map", reservationResponse.data.map((val) => {
       return val.payment
     }).join(','))
-        axios.get(`http://${HOST}:8060/api/v1/payments`, {
+        axios.get(`http://${HOST2}:8060/api/v1/payments`, {
         params: {
           paymentUids: reservationResponse.data.map((val) => {
             return val.payment
@@ -229,14 +229,14 @@ app.get('/api/v1/reservations', (req, res) => {
 app.get('/api/v1/me', (req, res) => {
   res.setHeader('Content-Type', 'application/json')
 
-  breakerLoyaltyGet.fire(`http://${HOST}:8050/api/v1/loyalty`, {
+  breakerLoyaltyGet.fire(`http://${HOST2}:8050/api/v1/loyalty`, {
     params: {
       username: req.header("X-User-Name"),
     }
   }).then((loyaltyResponse) => {
     const loyalty = loyaltyResponse
     
-    breakerReservationGet.fire(`http://${HOST}:8080/api/v1/reservations`, {
+    breakerReservationGet.fire(`http://${HOST2}:8080/api/v1/reservations`, {
       headers: {
         "X-User-Name": req.header("X-User-Name")
       }
@@ -253,7 +253,7 @@ app.get('/api/v1/me', (req, res) => {
     // react on errors.
     const loyalty = {}
     
-    breakerReservationGet.fire(`http://${HOST}:8080/api/v1/reservations`, {
+    breakerReservationGet.fire(`http://${HOST2}:8080/api/v1/reservations`, {
       headers: {
         "X-User-Name": req.header("X-User-Name")
       }
@@ -274,12 +274,12 @@ app.post('/api/v1/reservations', (req, res) => {
   let date_2 = new Date(req.body.endDate);
   let difference = date_2.getTime() - date_1.getTime();
   let days = Math.ceil(difference / (1000 * 3600 * 24))
-  let hotelRequest = axios.get(`http://${HOST}:8070/api/v1/hotels/${req.body.hotelUid}`, {
+  let hotelRequest = axios.get(`http://${HOST2}:8070/api/v1/hotels/${req.body.hotelUid}`, {
     params: {
       username: req.header("X-User-Name"),
     }
   })
-  let avaibilityRequest = axios.get(`http://${HOST}:8070/api/v1/avaibility`, {
+  let avaibilityRequest = axios.get(`http://${HOST2}:8070/api/v1/avaibility`, {
     params: {
       username: req.header("X-User-Name"),
       hotelUid: req.body.hotelUid,
@@ -294,7 +294,7 @@ app.post('/api/v1/reservations', (req, res) => {
     console.log("avaibility", avaibility.data.available)
     if (avaibility.data.available) {
       console.log("payValues", hotel.data, days)
-      breakerLoyaltyGet.fire(`http://${HOST}:8050/api/v1/loyalty`, {
+      breakerLoyaltyGet.fire(`http://${HOST2}:8050/api/v1/loyalty`, {
         params: {
           username: req.header("X-User-Name"),
         }
@@ -388,7 +388,7 @@ app.post('/api/v1/reservations', (req, res) => {
 */
 
 app.delete('/api/v1/reservations/:reservationUid', (req, res) => {
-  axios.delete(`http://${HOST}:8070/api/v1/reservations/${req.params.reservationUid}`, {
+  axios.delete(`http://${HOST2}:8070/api/v1/reservations/${req.params.reservationUid}`, {
     params: {
       username: req.header("X-User-Name")
     }
@@ -409,7 +409,7 @@ app.delete('/api/v1/reservations/:reservationUid', (req, res) => {
 });
 
 function pay(req, res, hotel, days, loyalty) {
-  axios.post(`http://${HOST}:8060/api/v1/pay`, null, {
+  axios.post(`http://${HOST2}:8060/api/v1/pay`, null, {
         params: {
           price: ((hotel.price * days) - ((hotel.price * days) * loyalty.discount / 100))
         }
@@ -437,7 +437,7 @@ function pay(req, res, hotel, days, loyalty) {
 }
 
 function reservation(req, res, paymentUid, hotel, payData, loyalty) {
-    axios.post(`http://${HOST}:8070/api/v1/reservations`, null, {
+    axios.post(`http://${HOST2}:8070/api/v1/reservations`, null, {
       params: {
         username: req.header("X-User-Name"),
         paymentUid: paymentUid,
@@ -449,7 +449,7 @@ function reservation(req, res, paymentUid, hotel, payData, loyalty) {
     })
     .then((reservationResponse) => {
       // handle success
-          axios.post(`http://${HOST}:8050/api/v1/loyalty`, null, {
+          axios.post(`http://${HOST2}:8050/api/v1/loyalty`, null, {
             params: {
               username: req.header("X-User-Name")
             }
