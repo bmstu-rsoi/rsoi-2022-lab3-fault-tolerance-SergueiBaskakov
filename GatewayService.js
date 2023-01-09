@@ -33,7 +33,7 @@ console.log(`Running on http://${HOST}:${PORT}`);
 const options = {
   timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
   errorThresholdPercentage: 50, // When 50% of requests fail, trip the circuit
-  resetTimeout: 30000 // After 30 seconds, try again.
+  resetTimeout: 20000 // After 30 seconds, try again.
 };
 
 const breakerReservationGet = new CircuitBreaker(axios.get, options);
@@ -45,9 +45,35 @@ const breakerLoyaltyPost = new CircuitBreaker(axios.post, options);
 breakerLoyaltyPost.on('close',
   () => {
     if (loyalytyBreakerStack.length > 0) {
-      loyalytyBreakerStack.forEach((element) => {
+      var temp = loyalytyBreakerStack
+      loyalytyBreakerStack = []
+      temp.forEach((element) => {
         console.log("stack")
-        element.function()
+        element()
+      })
+    }
+  });
+
+  breakerLoyaltyPost.on('halfOpen',
+  () => {
+    if (loyalytyBreakerStack.length > 0) {
+      var temp = loyalytyBreakerStack
+      loyalytyBreakerStack = []
+      temp.forEach((element) => {
+        console.log("stack")
+        element()
+      })
+    }
+  });
+
+  breakerLoyaltyGet.on('halfOpen',
+  () => {
+    if (loyalytyBreakerStack.length > 0) {
+      var temp = loyalytyBreakerStack
+      loyalytyBreakerStack = []
+      temp.forEach((element) => {
+        console.log("stack")
+        element()
       })
     }
   });
@@ -55,9 +81,11 @@ breakerLoyaltyPost.on('close',
   breakerLoyaltyGet.on('close',
   () => {
     if (loyalytyBreakerStack.length > 0) {
-      loyalytyBreakerStack.forEach((element) => {
+      var temp = loyalytyBreakerStack
+      loyalytyBreakerStack = []
+      temp.forEach((element) => {
         console.log("stack")
-        element.function()
+        element()
       })
     }
   });
@@ -412,12 +440,12 @@ app.post('/api/v1/reservations', (req, res) => {
 */
 
 app.delete('/api/v1/reservations/:reservationUid', (req, res) => {
-  cancelReservation(req.params.reservationUid, req.header("X-User-Name"))
-  res.statusCode = 204
-  res.send()
+  cancelReservation(req.params.reservationUid, req.header("X-User-Name"), res)
+  //res.statusCode = 204
+  //res.send()
 });
 
-function cancelReservation(reservationUid, username) {
+function cancelReservation(reservationUid, username, res) {
   breakerLoyaltyPost.fire(`http://${HOST2}:8050/api/v1/loyaltyReduce`, null, {
     params: {
       username: username
@@ -445,35 +473,52 @@ function cancelReservation(reservationUid, username) {
     })
     .then((paymentResponse) => {
       console.log("paymentResponse", paymentResponse)
-      //res.statusCode = 204
-      //res.send()
+      if (res) {
+        res.statusCode = 204
+        res.send()
+      }
+      
     })
     .catch((error) => {
       // handle error
-      //res.statusCode = 404
-      //res.end(JSON.stringify({ message: error.message}));
+      if (res) {
+        res.statusCode = 404
+        res.end(JSON.stringify({ message: error.message}));
+      }
+      
     })
     // use/access the results 
   })).catch(error => {
     // react on errors.
-    //res.statusCode = 404
-    console.log(error)
-    //res.end(JSON.stringify({ message: error.message}));
+    if (res) {
+      res.statusCode = 404
+      console.log(error)
+      res.end(JSON.stringify({ message: error.message}));
+    }
+    
   })
   })
   .catch((error) => {
     // handle error
     if (error.code == "EOPENBREAKER" || error.code == "ECONNREFUSED") {
+      console.log("---------------------")
+      console.log(reservationUid)
       loyalytyBreakerStack.push(() => {
-        console.log(reservationUid)
-        cancelReservation(reservationUid, username)
+        
+        cancelReservation(reservationUid, username, null)
       })
-      //res.statusCode = 204
-      //res.send()
+      if (res) {
+        res.statusCode = 204
+        res.send()
+      }
+      
     }
     else {
-      //res.statusCode = 404
-      //res.end(JSON.stringify({ message: error.message}));
+      if (res) {
+        res.statusCode = 404
+        res.end(JSON.stringify({ message: error.message}));
+      }
+      
     }
     
   })
