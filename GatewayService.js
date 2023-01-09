@@ -7,7 +7,8 @@ const CircuitBreaker = require('opossum');
 
 // Constants
 const PORT = 8080;
-const HOST = '0.0.0.0';
+const HOST2 = '0.0.0.0';
+const HOST = 'host.docker.internal';
 // App
 const app = express();
 
@@ -27,7 +28,7 @@ app.use(express.urlencoded({ extended: true }));
 
 app.listen(PORT, HOST);
 
-console.log(`Running on http://${HOST}:${PORT}`);
+console.log(`Running on http://${HOST2}:${PORT}`);
 
 const options = {
   timeout: 3000, // If our function takes longer than 3 seconds, trigger a failure
